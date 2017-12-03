@@ -24,46 +24,16 @@ namespace Game1 {
 		public bool IsPlaying = false;
 		public int IdleFor = 0;
 
-		Dictionary<string, int> highScores = new Dictionary<string, int>();
+		List<KeyValuePair<string, int>> highScores = new List<KeyValuePair<string, int>>();
 
 		bool doHighscore = false;
 		string hsName;
-
-		// TODO: http://www.drpetter.se/project_sfxr.html
 		
 		public Game1() {
 			graphics = new GraphicsDeviceManager(this);
 			Content.RootDirectory = "Content";
 			Game = this;
-			//http://gmscoreboard.com/create-account.php
-
-			using (var wc = new WebClient()) {
-				var scores = wc.DownloadString("http://gmscoreboard.com/handle_score.php?tagid=5a22c5e4e3a0915122283242312&getscore=5");
-				try {
-					var sd = JsonConvert.DeserializeObject<Dictionary<string, string>>(scores);
-					if (sd.Any()) {
-						var mk = sd.Keys.Where(k => k.Length < 3).Select(k => int.Parse(k.Substring(1))).Max();
-						for (int i = 0; i < mk; i++) {
-							highScores.Add(sd["p" + (i + 1)], int.Parse(sd["s" + (i + 1)]));
-						}
-					}
-				}
-				catch {
-
-				}
-			}
-
-			if (File.Exists("highscore.txt")) {
-				var lines = File.ReadAllLines("highscore.txt");
-				foreach (var l in lines) {
-					var n = l.Split('|').First();
-					var s = int.Parse(l.Split('|').Last());
-					if (highScores.ContainsKey(n))
-						highScores[n] = Math.Max(highScores[n], s);
-					else
-						highScores.Add(n, s);
-				}
-			}
+			
 		}
 
 		int botThink = 0;
@@ -86,6 +56,35 @@ namespace Game1 {
 
 			manager = new EntityManager(Content);
 			base.Initialize();
+
+
+			new System.Threading.Thread(() => {
+				try {
+					using (var wc = new WebClient()) {
+
+						var scores = wc.DownloadString("http://gmscoreboard.com/handle_score.php?tagid=5a22c5e4e3a0915122283242312&getscore=5");
+						var sd = JsonConvert.DeserializeObject<Dictionary<string, string>>(scores);
+						if (sd.Any()) {
+							var mk = sd.Keys.Where(k => k.Length < 3).Select(k => int.Parse(k.Substring(1))).Max();
+							for (int i = 0; i < mk; i++) {
+								highScores.Add(new KeyValuePair<string, int>(sd["p" + (i + 1)], int.Parse(sd["s" + (i + 1)])));
+							}
+						}
+					}
+				}
+				catch {
+
+				}
+			}).Start();
+
+			if (File.Exists("highscore.txt")) {
+				var lines = File.ReadAllLines("highscore.txt");
+				foreach (var l in lines) {
+					var n = l.Split('|').First();
+					var s = int.Parse(l.Split('|').Last());
+					highScores.Add(new KeyValuePair<string, int>(n, s));
+				}
+			}
 		}
 
 		/// <summary>
@@ -108,7 +107,7 @@ namespace Game1 {
 		/// </summary>
 		protected override void UnloadContent() {
 			// TODO: Unload any non ContentManager content here
-			File.WriteAllLines("highscore.txt", highScores.Select(kv => kv.Key + "|" + kv.Value));
+			File.WriteAllLines("highscore.txt", highScores.OrderByDescending(kv => kv.Value).Take(10).Select(kv => kv.Key + "|" + kv.Value));
 		}
 
 		bool waitUpEnter;
@@ -219,12 +218,17 @@ and they really want the money you're taking...";
 			if (pressed[Keys.Enter] && ks.IsKeyUp(Keys.Enter)) {
 				if (doHighscore) {
 					if (hsName.Length > 0) {
-						highScores.Add(hsName, lastScore);
-						using (var wc = new WebClient()) {
-							wc.DownloadString("http://gmscoreboard.com/handle_score.php?tagid=5a22c5e4e3a0915122283242312&player=" + hsName + "&score=" + lastScore);
-						}
-						if (highScores.Count > 5)
-							highScores.Remove(highScores.FirstOrDefault(kv => kv.Value == highScores.Min(k => k.Value)).Key);
+						highScores.Add(new KeyValuePair<string, int>(hsName, lastScore));
+						new System.Threading.Thread(() => {
+							try {
+								using (var wc = new WebClient()) {
+									wc.DownloadString("http://gmscoreboard.com/handle_score.php?tagid=5a22c5e4e3a0915122283242312&player=" + hsName + "&score=" + lastScore);
+								}
+							}
+							catch {
+
+							}
+						}).Start();
 						doHighscore = false;
 						IsPlaying = false;
 					}
