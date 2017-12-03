@@ -13,7 +13,7 @@ namespace Game1.Entities {
             texture = Content.LoadFlyWeight<Texture2D>("textures/cloud");
             base.Create(Content);
             VelX = -3;
-            depth = 10000 + (int)Id;
+            depth = 10000 + (int)Id * 10;
             scale.X = 0.4f + rand.Next(0, 10) / 10f;
             scale.Y = 0.4f + rand.Next(0, 10) / 10f;
             rotation = (float)(rand.NextDouble() * Math.PI * 2);

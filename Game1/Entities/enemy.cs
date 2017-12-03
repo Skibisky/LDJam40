@@ -34,6 +34,7 @@ namespace Game1.Entities {
 		float destX;
 		float destY;
 		float destDir;
+		float velMax = 10;
 
 		public Enemy() : base() {
 			OnCollide += Enemy_OnCollide;
@@ -42,68 +43,39 @@ namespace Game1.Entities {
 			health = healthMax;
 
 			behaviour = rand.Next(0, 4); // 13
+			if (behaviour == 2)
+				chargeMax = 2000;
 		}
 
 		public static int EnemyHealth() {
-			return 5 + Player.Current.dollars / 10 + Player.Current.powerupHealth + Player.Current.distTravelled / 1000;
+			return 5 + Player.Current.powerupHealth / 3 + Player.Current.dollars / 12 + Player.Current.distTravelled / 1000;
 		}
 
 		public static int EnemyDamage() {
-			return 1 + Player.Current.powerupDamage / 5 + Player.Current.dollars / 10 + Player.Current.distTravelled / 1000;
+			return 1 + Player.Current.powerupDamage / 6 + Player.Current.dollars / 12 + Player.Current.distTravelled / 1000;
 		}
 
 		private void Enemy_OnDeath(object sender, EventArgs e) {
 			Player.Current.kills++;
 
-			var ef = new ogpEffect() {
-				blend = blend,
-				texture = texture,
-				X = X,
-				Y = Y,
-				rotation = rotation,
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef);
+			// turn it's components into particles
+			var blends = new Color[] {blend, armBlend, wingBlend, bitBlend };
+			var texts = new Texture2D[] {texture, arms, wings, bits };
+			var rots = new float[] {rotation, armRotation, wingRotation, bitRotation};
 
-			ef = new ogpEffect() {
-				blend = armBlend,
-				texture = arms,
-				X = X,
-				Y = Y,
-				rotation = armRotation,
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef);
+			for (int i = 0; i < blends.Length; i++) {
 
-			ef = new ogpEffect() {
-				blend = wingBlend,
-				texture = wings,
-				X = X,
-				Y = Y,
-				rotation = wingRotation,
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef);
-
-			ef = new ogpEffect() {
-				blend = bitBlend,
-				texture = bits,
-				X = X,
-				Y = Y,
-				rotation = bitRotation,
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef);
-
-
+				var ef = new ogpEffect(X, Y) {
+					blend = blends[i],
+					texture = texts[i],
+					rotation = rots[i],
+					VelX = rand.Next(-10, 10),
+					VelY = rand.Next(-10, 10),
+				};
+				ef.OnUpdate += Ef_OnUpdate;
+				Game1.Game.manager.Additions.Add(ef);
+			}
+			
 			Game1.Game.manager.Additions.Add(new Powerup() {
 				X = X,
 				Y = Y,
@@ -152,18 +124,13 @@ namespace Game1.Entities {
 			// move and charge up
 			switch (behaviour) {
 				case 3:
-
 					destX = 400 + 200 * (float)Math.Sin(charge / 50f);
 					destY = 300 + 150 * (float)Math.Cos(charge / 50f);
 
 					destX += 64 * (float)Math.Sin(Id);
 					destY += 64 * (float)Math.Cos(Id);
 
-					VelX = (destX - X) / 50f;
-					VelY = (destY - Y) / 50f;
-
 					charge++;
-
 					break;
 				case 2:
 					if (refire <= 0) {
@@ -172,10 +139,7 @@ namespace Game1.Entities {
 						destY = Player.Current.Y + (float)(192 * Math.Cos(destDir));
 						refire = 60;
 					}
-
-					VelX = (destX - X) / 50f;
-					VelY = (destY - Y) / 50f;
-
+					charge++;
 					refire--;
 					break;
 				case 1:
@@ -188,19 +152,30 @@ namespace Game1.Entities {
 
 					destX += 64 * (float)Math.Sin(Id);
 					destY += 64 * (float)Math.Cos(Id);
-
-					VelX = (destX - X) / 50f;
-					VelY = (destY - Y) / 50f;
 					
 					break;
 				case 0:
 				default:
-					VelX = (300 - X) / 100f;
+					velMax = 2;
+					destX = 300;
+					destY = Y;
 					if (X < 350) {
 						charge++;
 					}
 					break;
 			}
+
+			VelX = (destX - X) / 50f;
+			VelY = (destY - Y) / 50f;
+
+			if (VelX > velMax)
+				VelX = velMax;
+			else if (VelX < -velMax)
+				VelX = -velMax;
+			if (VelY > velMax)
+				VelY = velMax;
+			else if (VelY < -velMax)
+				VelY = -velMax;
 
 			if (charge >= chargeMax) {
 				wasCharged = true;
@@ -209,50 +184,21 @@ namespace Game1.Entities {
 				wasCharged = false;
 			}
 
-			float bvelX = (Player.Current.X - X);
-			float bvelY = (Player.Current.Y - Y);
-			float bdist = (float)Math.Sqrt(bvelX * bvelX + bvelY * bvelY);
-			bvelX = 10 * bvelX / bdist;
-			bvelY = 10 * bvelY / bdist;
-
+			
 			// fire!
 			switch (behaviour) {
 				case 1:
 					if (wasCharged) {
 						refire--;
 						if (refire <= 0) {
-						  charge -= 30;
-							health -= 1;
+							charge -= 30;
 							alternate = !alternate;
 							if (rand.Next(0, 2) == 0)
 								Game1.Game.PlaySound("sounds/enemy1");
 							else
 								Game1.Game.PlaySound("sounds/enemy2");
 
-							if (alternate) {
-								Game1.Game.manager.Additions.Add(new Bullet() {
-									blend = Color.Red,
-									damage = EnemyDamage(),
-									X = X + (float)(32 * Math.Sin(armRotation)),
-									Y = Y + (float)(32 * Math.Cos(armRotation)),
-									rotation = (float)(Math.Atan2(Player.Current.Y - Y, Player.Current.X - X)),
-									VelX = bvelX,
-									VelY = bvelY,
-									Owner = this,
-								});
-							}
-							else {
-								Game1.Game.manager.Additions.Add(new Bullet() {
-									blend = Color.Red,
-									damage = EnemyDamage(),
-									X = X - (float)(32 * Math.Sin(armRotation)),
-									Y = Y - (float)(32 * Math.Cos(armRotation)),
-									rotation = (float)(Math.Atan2(Player.Current.Y - Y, Player.Current.X - X)),
-									VelX = bvelX,
-									VelY = bvelY,
-									Owner = this,
-								});
-							}
+							ShootBullet(alternate);
 							refire = 30;
 						}
 					}
@@ -262,36 +208,48 @@ namespace Game1.Entities {
 					if (wasCharged) {
 						charge = 0;
 						wasCharged = false;
-						health -= 1;
 						if (rand.Next(0, 2) == 0)
 							Game1.Game.PlaySound("sounds/enemy1");
 						else
 							Game1.Game.PlaySound("sounds/enemy2");
-
-						Game1.Game.manager.Additions.Add(new Bullet() {
-							blend = Color.Red,
-							damage = EnemyDamage(),
-							X = X + (float)(32 * Math.Sin(armRotation)),
-							Y = Y + (float)(32 * Math.Cos(armRotation)),
-							rotation = (float)(Math.Atan2(Player.Current.Y - Y, Player.Current.X - X)),
-							VelX = bvelX,
-							VelY = bvelY,
-							Owner = this,
-						});
-						health -= 1;
-						Game1.Game.manager.Additions.Add(new Bullet() {
-							blend = Color.Red,
-							damage = EnemyDamage(),
-							X = X - (float)(32 * Math.Sin(armRotation)),
-							Y = Y - (float)(32 * Math.Cos(armRotation)),
-							rotation = (float)(Math.Atan2(Player.Current.Y - Y, Player.Current.X - X)),
-							VelX = bvelX,
-							VelY = bvelY,
-							Owner = this,
-						});
+						
+						ShootBullet(true);
+						ShootBullet(false);
+						if (behaviour == 2)
+							this.Kill();
 					}
 					break;
 			}
+		}
+
+		public void ShootBullet(bool isTop) {
+			float bvelX = (Player.Current.X - X);
+			float bvelY = (Player.Current.Y - Y);
+			float bdist = (float)Math.Sqrt(bvelX * bvelX + bvelY * bvelY);
+			bvelX = 10 * bvelX / bdist;
+			bvelY = 10 * bvelY / bdist;
+
+			health -= EnemyDamage() / 3;
+			var b = new Bullet() {
+				blend = Color.Red,
+				damage = EnemyDamage(),
+				X = X,
+				Y = Y,
+				rotation = (float)(Math.Atan2(Player.Current.Y - Y, Player.Current.X - X)),
+				VelX = bvelX,
+				VelY = bvelY,
+				Owner = this,
+			};
+			// TODO: properly?
+			if (isTop) {
+				b.X += (float)(32 * Math.Sin(armRotation));
+				b.Y += (float)(32 * Math.Cos(armRotation));
+			}
+			else {
+				b.X += (float)(32 * Math.Sin(armRotation + Math.PI));
+				b.Y += (float)(32 * Math.Cos(armRotation + Math.PI));
+			}
+			Game1.Game.manager.Additions.Add(b);
 		}
 
 		public override void Render(SpriteBatch sb) {

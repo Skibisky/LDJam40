@@ -286,8 +286,7 @@ and they really want the money you're taking...";
 					hsName = "";
 					doHighscore = true;
 				}
-				if (!doHighscore)
-					IdleFor++;
+				IdleFor++;
 			}
 			else {
 				IdleFor = 0;
@@ -351,9 +350,15 @@ and they really want the money you're taking...";
 					}
 				}
 			}
-			if (IdleFor > 200) {
+
+			if (!doHighscore && IdleFor > 200) {
 				IsPlaying = false;
 				SpawnReset();
+			}
+			else if (doHighscore && IdleFor > 1200) {
+				IsPlaying = false;
+				SpawnReset();
+				doHighscore = false;
 			}
 
 			// TODO: Add your update logic here
@@ -363,7 +368,7 @@ and they really want the money you're taking...";
 			if (nextCloud < 0) {
 				nextCloud = 10;
 				manager.Add(new Cloud() {
-					X = 800,
+					X = 1000,
 					Y = random.Next(0, 600),
 					depth = 10000,
 				});
@@ -410,11 +415,11 @@ and they really want the money you're taking...";
 		}
 
 		public static int NextPowerTime() {
-			return (int)(150 * (1 + (Player.Current.kills + Player.Current.powerups * 3 + Player.Current.dollars) / 30f));
+			return (int)(150 * (1 + (Player.Current.dollars + Player.Current.powerups * 3 + Player.Current.dollars) / 10f));
 		}
 
 		public static int NextObstacleTime() {
-			return (int)(500 / (1 + (Player.Current.kills + Player.Current.powerups * 2 + Player.Current.dodged) / 30f));
+			return (int)(500 / (1 + (Player.Current.dollars / 2 + Player.Current.powerups * 2 + Player.Current.dodged) / 30f));
 		}
 
 		Random random = new Random(); 
@@ -489,12 +494,17 @@ and they really want the money you're taking...";
 					spriteBatch.DrawString(sfd, "Distance: " + Player.Current.distTravelled / 100, new Vector2(350, 25), Color.Black);
 					spriteBatch.DrawString(sfd, "Speed: " + Player.Current.speed, new Vector2(350, 40), Color.Black);
 
+					spriteBatch.DrawRectangle(new Rectangle(300, 70, Player.Current.health * 200 / Player.Current.healthMax, 20),
+						Extensions.HSVtoRGB(Math.Max(0, -20 + Player.Current.health * 140 / Player.Current.healthMax), 0.8f, 0.8f));
+
+					spriteBatch.DrawRectangle(new Rectangle(300, 90, ((Player.Current.HealTime() - Player.Current.nextHeal) * 200 / Player.Current.HealTime()), 10), Color.Teal);
+
 					spriteBatch.DrawString(sfd, "Buffs: " + Player.Current.powerups, new Vector2(650, 10), Color.Black);
 					spriteBatch.DrawString(sfd, "Buff Time: " + NextPowerTime(), new Vector2(650, 25), Color.Black);
 					spriteBatch.DrawString(sfd, "Damage: " + Player.Current.damage, new Vector2(650, 40), Color.Black);
 
 
-					spriteBatch.DrawString(sfd, "Dodged: " + Player.Current.kills, new Vector2(10, 565), Color.Black);
+					spriteBatch.DrawString(sfd, "Dodged: " + Player.Current.dodged, new Vector2(10, 565), Color.Black);
 					spriteBatch.DrawString(sfd, "Obstacle Time: " + NextObstacleTime(), new Vector2(10, 580), Color.Black);
 
 					spriteBatch.DrawString(sfd, "$: " + Player.Current.dollars, new Vector2(650, 565), Color.Black);
@@ -514,16 +524,18 @@ and they really want the money you're taking...";
 						DrawStringCentered("fonts/debug", "-- Press Enter --", 400, 400, Color.Black);
 					}
 				}
-				else {
-					if (!Player.Current?.Alive ?? false) {
-						DrawStringCentered("fonts/menu", "You lose!", 400, 300, Color.Black);
-						DrawStringCentered("fonts/score", "Score: " + lastScore, 400, 330, Color.Black);
-						if (doHighscore) {
-							DrawStringCentered("fonts/debug", "*NEW* High Score!", 400, 350, Color.Black);
-							DrawStringCentered("fonts/debug", "Name: " + hsName, 400, 370, Color.Black);
-						}
+				else if (!Player.Current?.Alive ?? false) {
+					DrawStringCentered("fonts/menu", "You lose!", 400, 300, Color.Black);
+					DrawStringCentered("fonts/score", "Score: " + lastScore, 400, 330, Color.Black);
+					if (doHighscore) {
+						DrawStringCentered("fonts/debug", "*NEW* High Score!", 400, 350, Color.Black);
+						DrawStringCentered("fonts/debug", "Name: " + hsName, 400, 370, Color.Black);
+					}
+					if ((flash / 20) % 2 == 0) {
+						DrawStringCentered("fonts/debug", "-- Press Enter --", 400, 400, Color.Black);
 					}
 				}
+				
 			}
 			spriteBatch.End();
 			flash++;

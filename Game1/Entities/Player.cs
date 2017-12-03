@@ -28,7 +28,7 @@ namespace Game1.Entities {
 						Game1.Game.PlaySound("sounds/dollar1");
 					else
 						Game1.Game.PlaySound("sounds/dollar2");
-					dollars++;
+					dollars += (int)(Enemy.EnemyHealth() / 10f + Enemy.EnemyDamage() / 2f + 0.5);
 				}
 				else {
 					if (rand.Next(0, 2) == 0)
@@ -155,8 +155,15 @@ namespace Game1.Entities {
 		public int damageTaken;
 		public int distTravelled;
 		public int speed = 5;
+		public int nextHeal;
 
-		public int shootTime = 10;
+		public int HealTime() {
+			return 90 / (1 + dollars / 5);
+		}
+
+		public int ShootTime() {
+			return 7 + dollars / 5;
+		}
 		public int shootCool = 0;
 
 		public override void Create(ContentManager Content) {
@@ -166,11 +173,14 @@ namespace Game1.Entities {
 
 		const float VelDamp = 0.85f;
 
-		int horKey = 0;
-		int verKey = 0;
-		int keyMax = 10;
+		float horKey = 0;
+		float verKey = 0;
+		float keyMax = 10;
 		float keyDiv = 5f;
 		float keyPow = 0.3f;
+		float KeyRate() {
+			return 1 + dollars / 10;
+		}
 
 		int bOx = 0;
 		int bOy = 5;
@@ -197,12 +207,20 @@ namespace Game1.Entities {
 				MoveRight = ks.IsKeyDown(Keys.D);
 			}
 
+			if (nextHeal > 0)
+				nextHeal--;
+			else if (health < healthMax && dollars > 0) {
+				health++;
+				dollars--;
+				nextHeal = HealTime();
+			}
+
 			shootCool -= 1;
 			if (ks.IsKeyDown(Keys.L)) {
 				this.health = 0;
 			}
 			if (TryShoot && shootCool <= 0) {
-				shootCool = shootTime;
+				shootCool = ShootTime();
 				if (rand.Next(0, 2) == 0)
 					Game1.Game.PlaySound("sounds/laser1");
 				else
@@ -233,7 +251,7 @@ namespace Game1.Entities {
 					e.blend.A -= 1;
 					e.VelX -= 0.1f;
 					e.VelY *= 0.96f;
-					if (e.blend.A < 0)
+					if (e.blend.A < 0 || e.X < -100)
 						Game1.Game.manager.Removals.Add(e.Id);
 				};
 				Game1.Game.manager.Additions.Add(dust);
@@ -276,12 +294,12 @@ namespace Game1.Entities {
 
 			if (MoveUp) {
 				if (horKey < keyMax)
-					horKey++;  
+					horKey += 1 / KeyRate();  
 				VelY -= (float)Math.Pow(horKey, keyPow) / keyDiv;
 			}
 			else if (MoveDown) {
 				if (horKey < keyMax)
-					horKey++;
+					horKey += 1 / KeyRate();
 				VelY += (float)Math.Pow(horKey, keyPow) / keyDiv;
 			}
 			else {
@@ -295,12 +313,12 @@ namespace Game1.Entities {
 			}
 			if (MoveLeft) {
 				if (verKey < keyMax)
-					verKey++;
+					verKey += 1 / KeyRate();
 				VelX -= (float)Math.Pow(verKey, keyPow) / keyDiv;
 			}
 			else if (MoveRight) {
 				if (verKey < keyMax)
-					verKey++;
+					verKey += 1 / KeyRate();
 				VelX += (float)Math.Pow(verKey, keyPow) / keyDiv;
 			}
 			else {

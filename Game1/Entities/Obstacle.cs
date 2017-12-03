@@ -19,53 +19,35 @@ namespace Game1.Entities {
 			health = healthMax;
 		}
 
+
+		public static int ObstacleHealth() {
+			return 8 + Player.Current.powerupHealth / 2 + Player.Current.dollars / 5 + Player.Current.distTravelled / 1000;
+		}
+
+
 		static Random rand = new Random();
 
 		protected override void Death() {
 			Game1.Game.PlaySound("sounds/explode4");
-
-			var ef = new ogpEffect() {
-				blend = blend,
-				tname = "textures/rubble",
+			for (int i = 0; i < 10; i++) {
+				var ef = new ogpEffect() {
+					blend = Color.White,
+					tname = "textures/rubble",
+					X = X,
+					Y = Y,
+					rotation = (float)(rand.NextDouble() * Math.PI * 2),
+					VelX = rand.Next(-10, 10),
+					VelY = rand.Next(-10, 10),
+				};
+				ef.OnUpdate += Enemy.Ef_OnUpdate;
+				Game1.Game.manager.Additions.Add(ef);
+			}
+			Game1.Game.manager.Additions.Add(new Powerup() {
 				X = X,
 				Y = Y,
-				rotation = (float)(rand.NextDouble() * Math.PI * 2),
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Enemy.Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef);
-			ef = new ogpEffect() {
-				blend = blend,
-				tname = "textures/rubble",
-				X = X,
-				Y = Y,
-				rotation = (float)(rand.NextDouble() * Math.PI * 2),
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Enemy.Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef); ef = new ogpEffect() {
-				blend = blend,
-				tname = "textures/rubble",
-				X = X,
-				Y = Y,
-				rotation = (float)(rand.NextDouble() * Math.PI * 2),
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Enemy.Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef); ef = new ogpEffect() {
-				blend = blend,
-				tname = "textures/rubble",
-				X = X,
-				Y = Y,
-				rotation = (float)(rand.NextDouble() * Math.PI * 2),
-				VelX = rand.Next(-10, 10),
-				VelY = rand.Next(-10, 10),
-			};
-			ef.OnUpdate += Enemy.Ef_OnUpdate;
-			Game1.Game.manager.Additions.Add(ef);
+				depth = -10,
+				VelX = -2,
+			});
 		}
 
 		public override void Update() {
