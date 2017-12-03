@@ -219,16 +219,14 @@ and they really want the money you're taking...";
 				if (doHighscore) {
 					if (hsName.Length > 0) {
 						highScores.Add(new KeyValuePair<string, int>(hsName, lastScore));
-						new System.Threading.Thread(() => {
-							try {
-								using (var wc = new WebClient()) {
-									wc.DownloadString("http://gmscoreboard.com/handle_score.php?tagid=5a22c5e4e3a0915122283242312&player=" + hsName + "&score=" + lastScore);
-								}
+						try {
+							using (var wc = new WebClient()) {
+								wc.DownloadString("http://gmscoreboard.com/handle_score.php?tagid=5a22c5e4e3a0915122283242312&player=" + hsName + "&score=" + lastScore);
 							}
-							catch {
+						}
+						catch {
 
-							}
-						}).Start();
+						}
 						doHighscore = false;
 						IsPlaying = false;
 					}
