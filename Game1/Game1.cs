@@ -76,7 +76,7 @@ namespace Game1 {
 
 				}
 			}).Start();
-
+			/*
 			if (File.Exists("highscore.txt")) {
 				var lines = File.ReadAllLines("highscore.txt");
 				foreach (var l in lines) {
@@ -84,7 +84,7 @@ namespace Game1 {
 					var s = int.Parse(l.Split('|').Last());
 					highScores.Add(new KeyValuePair<string, int>(n, s));
 				}
-			}
+			}*/
 		}
 
 		/// <summary>
@@ -107,7 +107,7 @@ namespace Game1 {
 		/// </summary>
 		protected override void UnloadContent() {
 			// TODO: Unload any non ContentManager content here
-			File.WriteAllLines("highscore.txt", highScores.OrderByDescending(kv => kv.Value).Take(10).Select(kv => kv.Key + "|" + kv.Value));
+			//File.WriteAllLines("highscore.txt", highScores.OrderByDescending(kv => kv.Value).Take(10).Select(kv => kv.Key + "|" + kv.Value));
 		}
 
 		bool waitUpEnter;
