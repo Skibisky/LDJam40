@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using Microsoft.Xna.Framework.Audio;
 using System.Net;
-using Newtonsoft.Json;
 
 namespace Game1 {
 	/// <summary>
@@ -40,6 +39,9 @@ namespace Game1 {
 		Entity botTarget = null;
 		int lastScore = 0;
 
+		public static int WIDTH = 1366;
+		public static int HEIGHT = 768;
+
 		/// <summary>
 		/// Allows the game to perform any initialization it needs to before starting to run.
 		/// This is where it can query for any required services and load any non-graphic
@@ -48,8 +50,8 @@ namespace Game1 {
 		/// </summary>
 		protected override void Initialize() {
 			// TODO: Add your initialization logic here
-			graphics.PreferredBackBufferWidth = 800;
-			graphics.PreferredBackBufferHeight = 600;
+			graphics.PreferredBackBufferWidth = WIDTH;
+			graphics.PreferredBackBufferHeight = HEIGHT;
 			graphics.SynchronizeWithVerticalRetrace = true;
 			graphics.PreferMultiSampling = true;
 			graphics.ApplyChanges();
@@ -63,16 +65,23 @@ namespace Game1 {
 					using (var wc = new WebClient()) {
 
 						var scores = wc.DownloadString("http://gmscoreboard.com/handle_score.php?tagid=5a22c5e4e3a0915122283242312&getscore=5");
+						var sstr = scores.Replace("}","").Replace("\"", "").Split(',').Skip(1).ToArray();
+						for (int i = 0; i < sstr.Length; i += 2) {
+							var n = sstr[i].Split(':').Last();
+							var p = int.Parse(sstr[i + 1].Split(':').Last());
+							highScores.Add(new KeyValuePair<string, int>(n, p));
+						}
+						/*
 						var sd = JsonConvert.DeserializeObject<Dictionary<string, string>>(scores);
 						if (sd.Any()) {
 							var mk = sd.Keys.Where(k => k.Length < 3).Select(k => int.Parse(k.Substring(1))).Max();
 							for (int i = 0; i < mk; i++) {
 								highScores.Add(new KeyValuePair<string, int>(sd["p" + (i + 1)], int.Parse(sd["s" + (i + 1)])));
 							}
-						}
+						}*/
 					}
 				}
-				catch {
+				catch (Exception e) {
 
 				}
 			}).Start();
@@ -118,13 +127,13 @@ namespace Game1 {
 			lastScore = 0;
 
 			manager.Add(new Player() {
-				X = 120,
-				Y = 240,
+				X = WIDTH / 5f,
+				Y = HEIGHT / 2f,
 			});
 
 			manager.Add(new Powerup() {
-				X = 240,
-				Y = 240,
+				X = WIDTH / 4f,
+				Y = HEIGHT / 2f,
 			});
 		}
 
@@ -193,7 +202,7 @@ and they really want the money you're taking...";
 				if (nextShape < 0) {
 					nextShape = 20;
 					var ef = new ogpEffect() {
-						X = random.Next(800, 1000),
+						X = random.Next(WIDTH + 100, WIDTH + 200),
 						Y = random.Next(-200, 0),
 						depth = -10,
 						VelX = -3,
@@ -205,6 +214,8 @@ and they really want the money you're taking...";
 					ef.OnUpdate += (a, b) => {
 						var e = a as ogpEffect;
 						e.rotation += 0.1f;
+						e.VelX = -3;
+						e.VelY = 3;
 					};
 					manager.Add(ef);
 				}
@@ -295,7 +306,7 @@ and they really want the money you're taking...";
 					if (botTarget == null || botThink > 100) {
 						botThink = 0;
 						if (random.Next(0, 2) == 0) {
-							var pul = manager.Entities.Select(kv => kv.Value).Where(e => e is Powerup && e.X > 50 && e.X < 750).ToList();
+							var pul = manager.Entities.Select(kv => kv.Value).Where(e => e is Powerup && e.X > 50 && e.X < WIDTH - 50).ToList();
 							if (pul.Any())
 								botTarget = pul.ElementAt(random.Next(0, pul.Count));
 						}
@@ -304,24 +315,28 @@ and they really want the money you're taking...";
 							if (enl.Any())
 								botTarget = enl.ElementAt(random.Next(0, enl.Count));
 						}
+						var getit = manager.Entities.Select(kv => kv.Value).FirstOrDefault(e => e is Powerup && e.X > 50 && e.X < WIDTH - 50 && 2 * 160 * 160 >
+							(e.X - Player.Current.X) * (e.X - Player.Current.X) + (e.Y - Player.Current.Y) * (e.Y - Player.Current.Y) );
+						if (getit != null)
+							botTarget = getit;
 					}
 
 					var po = botTarget as Powerup;
 					var en = botTarget as Enemy;
 					if (po != null) {
-						if (Player.Current.Y > po.Y + 8) {
+						if (Player.Current.Y > po.Y + 4) {
 							Player.Current.MoveUp = true;
 							Player.Current.MoveDown = false;
 						}
-						else if (Player.Current.Y < po.Y - 8) {
+						else if (Player.Current.Y < po.Y - 4) {
 							Player.Current.MoveDown = true;
 							Player.Current.MoveUp = false;
 						}
-						if (Player.Current.X < po.X - 8) {
+						if (Player.Current.X < po.X - 4) {
 							Player.Current.MoveRight = true;
 							Player.Current.MoveLeft = false;
 						}
-						else if (Player.Current.X > po.X + 8) {
+						else if (Player.Current.X > po.X + 4) {
 							Player.Current.MoveLeft = true;
 							Player.Current.MoveRight = false;
 						}
@@ -366,8 +381,8 @@ and they really want the money you're taking...";
 			if (nextCloud < 0) {
 				nextCloud = 10;
 				manager.Add(new Cloud() {
-					X = 1000,
-					Y = random.Next(0, 600),
+					X = WIDTH + 100,
+					Y = random.Next(0, HEIGHT),
 					depth = 10000,
 				});
 			}
@@ -376,8 +391,8 @@ and they really want the money you're taking...";
 			if (nextEnemy < 0) {
 				nextEnemy = NextEnemyTime();
 				manager.Add(new Enemy() {
-					X = 1600,
-					Y = random.Next(80, 520),
+					X = WIDTH + 600,
+					Y = random.Next(80, HEIGHT - 80),
 					depth = -10,
 					VelX = -2,
 				});
@@ -387,8 +402,8 @@ and they really want the money you're taking...";
 			if (nextPower < 0) {
 				nextPower = NextPowerTime();
 				manager.Add(new Powerup() {
-					X = 1600,
-					Y = random.Next(80, 520),
+					X = WIDTH + 600,
+					Y = random.Next(80, HEIGHT - 80),
 					depth = -10,
 					VelX = -2,
 				});
@@ -398,8 +413,8 @@ and they really want the money you're taking...";
 			if (nextObst < 0) {
 				nextObst = NextObstacleTime();
 				manager.Add(new Obstacle() {
-					X = 1600,
-					Y = random.Next(80, 520),
+					X = WIDTH + 600,
+					Y = random.Next(80, HEIGHT - 80),
 					depth = -10,
 					VelX = -2,
 				});
@@ -469,7 +484,7 @@ and they really want the money you're taking...";
 				spriteBatch.DrawString(sfd, crawlText, new Vector2(50, 50), Color.White);
 
 				if ((flash / 20) % 2 == 0) {
-					DrawStringCentered("fonts/debug", "-- Press Enter --", 400, 400, Color.White);
+					DrawStringCentered("fonts/debug", "-- Press Enter --", WIDTH / 2, HEIGHT / 2 + 100, Color.White);
 				}
 			}
 			else {
@@ -477,9 +492,9 @@ and they really want the money you're taking...";
 				//spriteBatch.Draw(Content.LoadFlyWeight<Texture2D>("textures/background"), new Rectangle(0, 0, 800, 600), new Rectangle(0, 0, 800, 600), Color.White, 0, Vector2.Zero, SpriteEffects.None, -0);
 				//spriteBatch.Draw(Content.LoadFlyWeight<Texture2D>("textures/cloud1"), new Vector2(300, 300) , Color.White);
 				if (muted)
-					DrawStringCentered("fonts/debug", "M: Unmute", 400, 570, Color.Black);
+					DrawStringCentered("fonts/debug", "M: Unmute", WIDTH / 2, HEIGHT - 30, Color.Black);
 				else
-					DrawStringCentered("fonts/debug", "M: Mute", 400, 570, Color.Black);
+					DrawStringCentered("fonts/debug", "M: Mute", WIDTH / 2, HEIGHT - 30, Color.Black);
 
 				var sfd = Content.LoadFlyWeight<SpriteFont>("fonts/debug");
 				if (Player.Current != null) {
@@ -488,49 +503,49 @@ and they really want the money you're taking...";
 					spriteBatch.DrawString(sfd, "Enemy HP: " + Enemy.EnemyHealth(), new Vector2(10, 40), Color.Black);
 					spriteBatch.DrawString(sfd, "Enemy Damage: " + Enemy.EnemyDamage(), new Vector2(10, 55), Color.Black);
 
-					spriteBatch.DrawString(sfd, "Health: " + Player.Current.health + "/" + Player.Current.healthMax, new Vector2(350, 10), Color.Black);
-					spriteBatch.DrawString(sfd, "Distance: " + Player.Current.distTravelled / 100, new Vector2(350, 25), Color.Black);
-					spriteBatch.DrawString(sfd, "Speed: " + Player.Current.speed, new Vector2(350, 40), Color.Black);
+					spriteBatch.DrawString(sfd, "Health: " + Player.Current.health + "/" + Player.Current.healthMax, new Vector2(WIDTH / 2 - 50, 10), Color.Black);
+					spriteBatch.DrawString(sfd, "Distance: " + Player.Current.distTravelled / 100, new Vector2(WIDTH / 2 - 50, 25), Color.Black);
+					spriteBatch.DrawString(sfd, "Speed: " + Player.Current.speed, new Vector2(WIDTH / 2 - 50, 40), Color.Black);
 
-					spriteBatch.DrawRectangle(new Rectangle(300, 70, Player.Current.health * 200 / Player.Current.healthMax, 20),
+					spriteBatch.DrawRectangle(new Rectangle(WIDTH / 2 - 100, 70, Player.Current.health * 200 / Player.Current.healthMax, 20),
 						Extensions.HSVtoRGB(Math.Max(0, -20 + Player.Current.health * 140 / Player.Current.healthMax), 0.8f, 0.8f));
 
-					spriteBatch.DrawRectangle(new Rectangle(300, 90, ((Player.Current.HealTime() - Player.Current.nextHeal) * 200 / Player.Current.HealTime()), 10), Color.Teal);
+					spriteBatch.DrawRectangle(new Rectangle(WIDTH / 2 - 100, 90, ((Player.Current.HealTime() - Player.Current.nextHeal) * 200 / Player.Current.HealTime()), 10), Color.Teal);
 
-					spriteBatch.DrawString(sfd, "Buffs: " + Player.Current.powerups, new Vector2(650, 10), Color.Black);
-					spriteBatch.DrawString(sfd, "Buff Time: " + NextPowerTime(), new Vector2(650, 25), Color.Black);
-					spriteBatch.DrawString(sfd, "Damage: " + Player.Current.damage, new Vector2(650, 40), Color.Black);
+					spriteBatch.DrawString(sfd, "Buffs: " + Player.Current.powerups, new Vector2(WIDTH - 150, 10), Color.Black);
+					spriteBatch.DrawString(sfd, "Buff Time: " + NextPowerTime(), new Vector2(WIDTH - 150, 25), Color.Black);
+					spriteBatch.DrawString(sfd, "Damage: " + Player.Current.damage, new Vector2(WIDTH - 150, 40), Color.Black);
 
 
-					spriteBatch.DrawString(sfd, "Dodged: " + Player.Current.dodged, new Vector2(10, 565), Color.Black);
-					spriteBatch.DrawString(sfd, "Obstacle Time: " + NextObstacleTime(), new Vector2(10, 580), Color.Black);
+					spriteBatch.DrawString(sfd, "Dodged: " + Player.Current.dodged, new Vector2(10, HEIGHT - 35), Color.Black);
+					spriteBatch.DrawString(sfd, "Obstacle Time: " + NextObstacleTime(), new Vector2(10, HEIGHT - 20), Color.Black);
 
-					spriteBatch.DrawString(sfd, "$: " + Player.Current.dollars, new Vector2(650, 565), Color.Black);
-					spriteBatch.DrawString(sfd, "Score: " + Score(), new Vector2(650, 580), Color.Black);
+					spriteBatch.DrawString(sfd, "$: " + Player.Current.dollars, new Vector2(WIDTH - 150, HEIGHT - 35), Color.Black);
+					spriteBatch.DrawString(sfd, "Score: " + Score(), new Vector2(WIDTH - 150, HEIGHT - 20), Color.Black);
 
 
 					
 				}
 				if (!IsPlaying) {
-					DrawStringCentered("fonts/menu", "High Scores", 400, 250, Color.Black);
+					DrawStringCentered("fonts/menu", "High Scores", WIDTH / 2, HEIGHT / 2 - 50, Color.Black);
 					var yy = 23;
 					foreach (var score in highScores.OrderByDescending(kv => kv.Value).Take(5)) {
-						DrawStringCentered("fonts/score", score.Key + ": " + score.Value, 400, 250 + yy, Color.Black);
+						DrawStringCentered("fonts/score", score.Key + ": " + score.Value, WIDTH / 2, HEIGHT / 2 - 50 + yy, Color.Black);
 						yy += 23;
 					}
 					if ((flash / 20) % 2 == 0) {
-						DrawStringCentered("fonts/debug", "-- Press Enter --", 400, 400, Color.Black);
+						DrawStringCentered("fonts/debug", "-- Press Enter --", WIDTH / 2, HEIGHT / 2 + 100, Color.Black);
 					}
 				}
 				else if (!Player.Current?.Alive ?? false) {
-					DrawStringCentered("fonts/menu", "You lose!", 400, 300, Color.Black);
-					DrawStringCentered("fonts/score", "Score: " + lastScore, 400, 330, Color.Black);
+					DrawStringCentered("fonts/menu", "You lose!", WIDTH / 2, HEIGHT / 2, Color.Black);
+					DrawStringCentered("fonts/score", "Score: " + lastScore, WIDTH / 2, HEIGHT / 2 + 30, Color.Black);
 					if (doHighscore) {
-						DrawStringCentered("fonts/debug", "*NEW* High Score!", 400, 350, Color.Black);
-						DrawStringCentered("fonts/debug", "Name: " + hsName, 400, 370, Color.Black);
+						DrawStringCentered("fonts/debug", "*NEW* High Score!", WIDTH / 2, HEIGHT / 2 + 50, Color.Black);
+						DrawStringCentered("fonts/debug", "Name: " + hsName, WIDTH / 2, HEIGHT / 2 + 70, Color.Black);
 					}
 					if ((flash / 20) % 2 == 0) {
-						DrawStringCentered("fonts/debug", "-- Press Enter --", 400, 400, Color.Black);
+						DrawStringCentered("fonts/debug", "-- Press Enter --", WIDTH / 2, HEIGHT / 2 + 100, Color.Black);
 					}
 				}
 				

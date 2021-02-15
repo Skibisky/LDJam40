@@ -93,7 +93,7 @@ namespace Game1.Entities {
 			f.VelY += 0.3f;
 			if (f.blend.A > 50)
 				f.blend.A -= 2;
-			if (f.Y > 700)
+			if (f.Y > Game1.HEIGHT + 100)
 				Game1.Game.manager.Removals.Add(f.Id);
 		}
 
@@ -124,8 +124,8 @@ namespace Game1.Entities {
 			// move and charge up
 			switch (behaviour) {
 				case 3:
-					destX = 400 + 200 * (float)Math.Sin(charge / 50f);
-					destY = 300 + 150 * (float)Math.Cos(charge / 50f);
+					destX = Game1.WIDTH / 2 + Game1.WIDTH / 4 * (float)Math.Sin(charge / 50f);
+					destY = Game1.HEIGHT / 2 + Game1.HEIGHT / 4 * (float)Math.Cos(charge / 50f);
 
 					destX += 64 * (float)Math.Sin(Id);
 					destY += 64 * (float)Math.Cos(Id);
@@ -144,10 +144,10 @@ namespace Game1.Entities {
 					break;
 				case 1:
 					charge++;
-					destX = 600;
+					destX = Game1.WIDTH - 100;
 					destY = 100;
-					if (Player.Current.Y < 300) {
-						destX = 500;
+					if (Player.Current.Y < Game1.HEIGHT / 2) {
+						destY = Game1.HEIGHT - 100;
 					}
 
 					destX += 64 * (float)Math.Sin(Id);
@@ -157,9 +157,9 @@ namespace Game1.Entities {
 				case 0:
 				default:
 					velMax = 2;
-					destX = 300;
+					destX = Game1.WIDTH / 3f;
 					destY = Y;
-					if (X < 350) {
+					if (X < Game1.WIDTH / 3f + 50) {
 						charge++;
 					}
 					break;
@@ -257,12 +257,7 @@ namespace Game1.Entities {
 			sb.Draw(bits, new Vector2(X, Y), texture.Bounds, bitBlend, bitRotation, origin, scale, SpriteEffects.None, (depth + 10000) / 20000f);
 			sb.Draw(arms, new Vector2(X, Y), texture.Bounds, armBlend, armRotation, origin, scale, SpriteEffects.None, (depth + 1 + 10000) / 20000f);
 			sb.Draw(wings, new Vector2(X, Y), texture.Bounds, wingBlend, wingRotation, origin, scale, SpriteEffects.None, (depth + 2 + 10000) / 20000f);
-			if (X > 800) {
-				sb.Draw(arrow, new Vector2(800 - (X - 800) / 10, Y), arrow.Bounds, Color.Red, 0, new Vector2(arrow.Width / 2, arrow.Height / 2), 1, SpriteEffects.None, 0);
-			}
-			else if (X < 0) {
-				sb.Draw(arrow, new Vector2(- X / 10, Y), arrow.Bounds, Color.Red, 0, new Vector2(arrow.Width / 2, arrow.Height / 2), 1, SpriteEffects.FlipVertically, 0);
-			}
+			this.RenderUpcoming(sb, arrow, Color.Red, true);
 		}
 
 	}

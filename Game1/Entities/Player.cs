@@ -293,57 +293,63 @@ namespace Game1.Entities {
 			}
 
 			if (MoveUp) {
-				if (horKey < keyMax)
+				/*if (horKey < keyMax)
 					horKey += 1 / KeyRate();  
-				VelY -= (float)Math.Pow(horKey, keyPow) / keyDiv;
+				VelY -= (float)Math.Pow(horKey, keyPow) / keyDiv;*/
+				VelY -= 1;
 			}
 			else if (MoveDown) {
-				if (horKey < keyMax)
+				/*if (horKey < keyMax)
 					horKey += 1 / KeyRate();
-				VelY += (float)Math.Pow(horKey, keyPow) / keyDiv;
+				VelY += (float)Math.Pow(horKey, keyPow) / keyDiv;*/
+				VelY += 1;
 			}
 			else {
-				horKey = 0;
+				VelY += -VelY / 10;
+				/*horKey = 0;
 				if (VelY != 0) {
 					VelY *= VelDamp;
 				}
 				if (Math.Abs(VelY) < 0.1) {
 					VelY = 0;
-				}
+				}*/
 			}
 			if (MoveLeft) {
-				if (verKey < keyMax)
+				/*if (verKey < keyMax)
 					verKey += 1 / KeyRate();
-				VelX -= (float)Math.Pow(verKey, keyPow) / keyDiv;
+				VelX -= (float)Math.Pow(verKey, keyPow) / keyDiv;*/
+				VelX -= 1;
 			}
 			else if (MoveRight) {
-				if (verKey < keyMax)
+				/*if (verKey < keyMax)
 					verKey += 1 / KeyRate();
-				VelX += (float)Math.Pow(verKey, keyPow) / keyDiv;
+				VelX += (float)Math.Pow(verKey, keyPow) / keyDiv;*/
+				VelX += 1;
 			}
 			else {
-				verKey = 0;
+				VelX += -VelX / 10;
+				/*verKey = 0;
 				if (VelX != 0) {
 					VelX *= VelDamp;
 				}
 				if (Math.Abs(VelX) < 0.1) {
 					VelX = 0;
-				}
+				}*/
 			}
 			if (X < 50) {
 				X = 50;
 				VelX = 0.3f;
 			}
-			else if (X > 750) {
-				X = 750;
+			else if (X > Game1.WIDTH - 50) {
+				X = Game1.WIDTH - 50;
 				VelX = -0.3f;
 			}
 			if (Y < 50) {
 				Y = 50;
 				VelY = 0.3f;
 			}
-			else if (Y > 550) {
-				Y = 550;
+			else if (Y > Game1.HEIGHT - 50) {
+				Y = Game1.HEIGHT - 50;
 				VelY = -0.3f;
 			}
 		}

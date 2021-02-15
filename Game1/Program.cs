@@ -17,4 +17,8 @@ namespace Game1
                 game.Run();
         }
     }
+
+	public class Game2 {
+
+	}
 }

@@ -17,6 +17,7 @@ namespace Game1.Entities {
 		public ogpEffect(float x = 0, float y = 0) : base() {
 			X = x;
 			Y = y;
+			this.inertia = 0.99f;
 		}
 
 		public override void Create(ContentManager Content) {

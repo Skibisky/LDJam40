@@ -63,9 +63,7 @@ namespace Game1.Entities {
 
 		public override void Render(SpriteBatch sb) {
 			base.Render(sb);
-			if (X > 800) {
-				sb.Draw(exclam, new Vector2(800 - (X - 800) / 10, Y), exclam.Bounds, Color.Yellow, 0, new Vector2(exclam.Width / 2, exclam.Height / 2), 1, SpriteEffects.None, 0);
-			}
+			this.RenderUpcoming(sb, exclam, Color.Yellow);
 		}
 	}
 }

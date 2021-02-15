@@ -17,6 +17,8 @@ namespace Game1.Entities {
 		public int depth;
 		public float rotation;
 
+		public float inertia = 0.94f;
+
 		public Vector2 origin = Vector2.Zero;
 		public Vector2 scale = Vector2.One;
 
@@ -57,6 +59,8 @@ namespace Game1.Entities {
 		internal protected virtual void UpdateBase() {
 			X += VelX;
 			Y += VelY;
+			VelX *= inertia;
+			VelY *= inertia;
 			this.Update();
 			OnUpdate?.Invoke(this, null);
 		}
@@ -64,6 +68,15 @@ namespace Game1.Entities {
 		public virtual void Render(SpriteBatch sb) {
 			if (texture != null)
 				sb.Draw(texture, new Vector2(X, Y), texture.Bounds, blend, rotation, origin, scale , SpriteEffects.None, (depth + 10000) / 20000f);
+		}
+
+		public void RenderUpcoming(SpriteBatch sb, Texture2D tex, Color blend, bool andLeft = false) {
+			if (X > Game1.WIDTH) {
+				sb.Draw(tex, new Vector2(Game1.WIDTH - (X - Game1.WIDTH) / 5, Y), tex.Bounds, blend, 0, new Vector2(tex.Width / 2, tex.Height / 2), 1, SpriteEffects.None, 0);
+			}
+			else if (X < 0 && andLeft) {
+				sb.Draw(tex, new Vector2(X / 5, Y), tex.Bounds, blend, 0, new Vector2(tex.Width / 2, tex.Height / 2), 1, SpriteEffects.FlipHorizontally, 0);
+			}
 		}
 	}
 }

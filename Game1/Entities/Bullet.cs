@@ -15,6 +15,7 @@ namespace Game1.Entities {
 
 		public Bullet() : base() {
 			OnCollide += Bullet_OnCollide;
+			this.inertia = 1;
 		}
 
 		static Random rand = new Random();
@@ -43,13 +44,13 @@ namespace Game1.Entities {
 		}
 
 		public override void Update() {
-			if (X > 900) {
+			if (X > Game1.WIDTH + 100) {
 				Game1.Game.manager.Removals.Add(this.Id);
 			}
 			else if (X < -100) {
 				Game1.Game.manager.Removals.Add(this.Id);
 			}
-			if (Y > 900) {
+			if (Y > Game1.HEIGHT + 100) {
 				Game1.Game.manager.Removals.Add(this.Id);
 			}
 			else if (Y < -100) {
